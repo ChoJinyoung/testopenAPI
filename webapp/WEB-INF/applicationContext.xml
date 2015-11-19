@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:oxm="http://www.springframework.org/schema/oxm"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+        http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+        http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.1.xsd
+        http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring
+        http://ehcache-spring-annotations.googlecode.com/svn/schema/ehcache-spring/ehcache-spring-1.1.xsd
+        http://www.springframework.org/schema/jee
+       http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
+        http://www.springframework.org/schema/oxm
+       http://www.springframework.org/schema/oxm/spring-oxm-3.0.xsd
+        http://www.springframework.org/schema/task
+        http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+
+	<context:annotation-config />
+
+
+
+	<context:component-scan base-package="com.dorothy.test">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Repository" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Service" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Component" />
+	</context:component-scan>
+
+	<!-- oracle datasource -->
+	<bean id="oracleDatasource" class="oracle.jdbc.pool.OracleDataSource"
+		destroy-method="close">
+		<property name="URL" value="jdbc:oracle:thin:@localhost:1521:xe" />
+		<property name="user" value="webdb" />
+		<property name="password" value="webdb" />
+		<property name="connectionCachingEnabled" value="true" />
+		<qualifier value="main-db" />
+	</bean>
+
+	<!-- MyBatis SqlSessionFactoryBean -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="oracleDatasource" />
+		<property name="configLocation" value="classpath:mybatis/configuration.xml" />
+	</bean>
+
+	<!-- MyBatis SqlSessionTemplate -->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="sqlSessionFactory" />
+	</bean>
+	
+	<context:annotation-config/>
+	
+	<!--
+		- xml 설정 파일과 빈 자동 스캔을 동시에 사용하는것을 테스트 하기 위해 서비스 클래스만
+		   어노테이션을 적용할 예정.
+		- 디폴트로 어노테이션이 설정된 클래스만 자동 스캔한다.
+		- 아래 설정에서는 Controller 어노테이션 클래스는 자동 스캔에서 제외하였다.
+	 -->
+	<context:component-scan base-package="com.dorothy.test">
+       <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+    </context:component-scan>
+    
+    <task:annotation-driven executor="myExecutor" scheduler="myScheduler"/>
+
+	<task:executor id="myExecutor" pool-size="5"/>
+
+	<task:scheduler id="myScheduler" pool-size="10"/>
+    
+    
+	<!-- REST 서비스 사용 -->
+ 	<bean id="restTemplate" class="org.springframework.web.client.RestTemplate"/>
+ 	<oxm:jaxb2-marshaller id="jaxb2Marshaller">
+		<oxm:class-to-be-bound name="com.dorothy.test.vo.SearchResultTbCase" />
+	</oxm:jaxb2-marshaller>
+	<bean id="marshallingConverter" class="com.dorothy.test.service.convert.MarShallingConverter"/>
+	
+</beans> 
